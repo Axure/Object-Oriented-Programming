@@ -89,3 +89,6 @@ CTestTestfile.cmake
 # CLion files
 cmake-build-*/
 .idea/
+
+# Custom build files
+build/
