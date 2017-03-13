@@ -1,7 +1,6 @@
 #include <cstddef>
 #include <algorithm>
-#define DEBUG___
-
+#include <memory>
 
 #include <iostream>
 
@@ -22,6 +21,18 @@ class Logger {
 #else
 #endif
   }
+
+#ifdef DEBUG___
+
+  template<class ...TParams>
+  void logf(const char* format, TParams&& ...args) {
+      printf(format, std::forward<TParams>(args)...);
+  }
+#else
+  template<class ...TParams>
+  void logf(const char* format, TParams&& ...args) {
+  }
+#endif
  private:
   static Logger *logger_;
  public:
@@ -34,6 +45,10 @@ class Logger {
 
 
 namespace Axurez {
+
+enum class Order {
+  GREATER, EQUAL, SMALLER
+};
 
 /**
  * The class for strings.
@@ -63,7 +78,7 @@ class String {
   template<std::size_t n>
   String(const char (&str)[n])  : length(n), storage(new char[n]) {
     std::copy(str, str + length, storage);
-    logger->log("const template lvalue");
+    logger->log("const template lvalue constructor");
   }
 
   /**
@@ -74,7 +89,7 @@ class String {
   template<std::size_t n>
   String(const char (&&str)[n])  : length(n), storage(new char[n]) {
     std::copy(str, str + length, storage);
-    logger->log("const template rvalue");
+    logger->log("const template rvalue constructor");
   }
 
   /**
@@ -129,9 +144,29 @@ class String {
   const char *cStr() const;
   /**
    *
-   * @return
+   * @return The raw C-string behind the class. Mutable.
    */
   char *cStr();
 
+  /**
+   * Matches a given sub string in the current string.
+   * @param subString
+   * @return The position of the first matched sub string. `-1` if not any.
+   */
+  std::size_t posSub(const String &subString) const;
+
+  /**
+   * Get the length of the string.
+   * @return The length of the string.
+   */
+  std::size_t getLength();
+
+  Order compareWith(const String &anotherString) const &;
+  bool operator<(const String &anotherString) const &;
+  bool operator>(const String &anotherString) const &;
+  bool operator<=(const String &anotherString) const &;
+  bool operator>=(const String &anotherString) const &;
+  bool operator==(const String &anotherString) const &;
+  bool operator!=(const String &anotherString) const &;
 };
 }
