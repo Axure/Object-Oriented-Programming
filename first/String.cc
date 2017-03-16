@@ -1,11 +1,13 @@
 
 #include <cstring>
+#include <cassert>
 #include "String.hh"
 namespace Axurez {
 
 enum ORDER {
   SMALLER = 0, EQUAL = 1, GREATER = 2
 };
+
 /**
  *
  * @tparam T
@@ -28,6 +30,7 @@ inline ORDER compareSingle<char>(const char &thiz, const char &that) {
   return static_cast<ORDER>((static_cast<int >(thiz > that) << 1)
       + static_cast<int >(thiz == that));
 }
+
 /**
  * The default constructor.
  */
@@ -51,7 +54,6 @@ String::String(const String &string) : length(string.length), storage(new char[l
   std::copy(string.storage, string.storage + length, storage);
 }
 
-
 /**
  * The copy constructor
  * @param string
@@ -68,6 +70,9 @@ String::~String() {
   if (storage != nullptr) {
     delete[] storage;
   }
+  if (longestPrefixSuffix != nullptr) {
+    delete[] longestPrefixSuffix;
+  }
 }
 
 /**
@@ -77,6 +82,8 @@ String::~String() {
  */
 char &String::operator[](std::size_t n) {
   logger->log("non-const subscript accessor");
+  logger->log("content could be modified");
+  modified = true;
   return storage[n];
 }
 
@@ -116,34 +123,93 @@ String &String::operator=(String &&string) {
 
 /**
  *
- * @return
+ * @return The const raw C-style string (char pointer).
  */
 const char *String::cStr() const {
   return storage;
 }
 
 /**
- *
+ * Get the raw C-style string inside the string class.
+ * This method is not const, thus you can modify directly the content inside the class.
  * @return
  */
 char *String::cStr() {
+  logger->log("cStr access in a non-const way");
+  logger->log("content could be modified");
+  modified = true;
   return storage;
 }
 
 /**
- * Implements the KMP algorithm.
- * @param subString
+ * TODO: Implements the KMP algorithm.
+ * @param parentString
+ * @return `length + 1` if not found.
+ * // TODO: search iterator abstraction.
+ * // TODO: facade and different impls.
+ */
+std::size_t String::beIndexOf(const String &parentString) const {
+  if (longestPrefixSuffix == nullptr || modified == true) {
+    calculateLongestPrefixSuffix();
+  }
+  std::size_t i = 0, j = 0;
+  while (i < parentString.length) {
+    while (parentString[i] != storage[j]) {
+      i += 1;
+      if (i >= parentString.length) return parentString.length;
+    };
+    while (parentString[i] == storage[j]) {
+      i += 1; j += 1;
+      if (j == length) return i - j;
+    };
+    if (j != length) {
+      j = longestPrefixSuffix[j - 1];
+    } else {
+      logger->logf("result: %d\n", i - j);
+      return i - j;
+    }
+    logger->logf("search: %u, %u, %u\n", i, j, length);
+  }
+  logger->logf("result: %d\n", parentString.length);
+  return parentString.length;
+//  for (std::size_t i = 0; i < parentString.length; ++i) {
+//    if (storage[j] == parentString[i]) {
+//      j += 1;
+//    } else {
+//      j = longestPrefixSuffix[j];
+//      i =
+//    }
+////    while (j != 0 && storage[j] != parentString[i]) {
+////      assert(j > 0);
+////      assert(j > longestPrefixSuffix[j]);
+////      j = longestPrefixSuffix[j];
+////    }
+////    if (storage[j] == parentString[i]) {
+////      j += 1;
+////    }
+//    logger->logf("search: %u, %u, %u\n", i, j, length);
+//    if (j == length) {
+//      assert(i - j + 1 >= 0);
+//      return i - j + 1;
+//    }
+//  }
+//  return parentString.length;
+}
+
+/**
+ * Getter of the length of the string.
  * @return
  */
-std::size_t String::posSub(const String &subString) const {
-
-  return 0;
-}
 std::size_t String::getLength() {
   return length;
 }
 
-Order String::compareWith(const String &anotherString) const& {
+/**
+ * The implementation of the string comparison function.
+ * @param anotherString
+ * @return
+ */
+Order String::compareWith(const String &anotherString) const &{
   logger->log("lvalue comparator");
   auto thisLonger = compareSingle(this->length, anotherString.length);
   switch (thisLonger) {
@@ -187,23 +253,56 @@ Order String::compareWith(const String &anotherString) const& {
       return Order::EQUAL;
   }
 }
-bool String::operator!=(const String &anotherString) const& {
+
+bool String::operator!=(const String &anotherString) const &{
   return compareWith(anotherString) != Order::EQUAL;
 }
-bool String::operator==(const String &anotherString) const& {
+
+bool String::operator==(const String &anotherString) const &{
   return compareWith(anotherString) == Order::EQUAL;
 }
-bool String::operator>=(const String &anotherString) const& {
+
+bool String::operator>=(const String &anotherString) const &{
   return compareWith(anotherString) != Order::SMALLER;
 }
-bool String::operator<=(const String &anotherString) const& {
+
+bool String::operator<=(const String &anotherString) const &{
   return compareWith(anotherString) != Order::GREATER;
 }
-bool String::operator>(const String &anotherString) const& {
+
+bool String::operator>(const String &anotherString) const &{
   return compareWith(anotherString) == Order::GREATER;
 }
-bool String::operator<(const String &anotherString) const& {
+
+bool String::operator<(const String &anotherString) const &{
   return compareWith(anotherString) == Order::SMALLER;
+}
+
+void String::calculateLongestPrefixSuffix() const {
+  if (longestPrefixSuffix != nullptr) {
+    delete[] longestPrefixSuffix;
+  }
+  longestPrefixSuffix = new std::size_t[length]();
+  std::size_t j = 0;
+  longestPrefixSuffix[0] = 0;
+  for (std::size_t i = 1; i < length; ++i) {
+    while (j != 0 && storage[j] != storage[i]) {
+      logger->logf("i: %u, j: %u\n", i, j);
+      assert(j >= 0);
+      assert(j > longestPrefixSuffix[j]);
+      j = longestPrefixSuffix[j];
+    }
+    if (storage[j] == storage[i]) {
+      j += 1;
+    }
+    assert(j < length);
+    longestPrefixSuffix[i] = j;
+  }
+  logger->logf("lpf: ");
+  for (int k = 0; k < length; ++k) {
+    logger->logf("%u, ", longestPrefixSuffix[k]);
+  }
+  logger->logf("\n");
 }
 
 }

@@ -1,5 +1,7 @@
 
 #include <cstdio>
+#include <cstdlib>
+#include <ctime>
 #include <cassert>
 #include "String.hh"
 
@@ -42,7 +44,26 @@ int main() {
   assert(String("3212111111111") == String("3212111111111"));
 
   string[2] = 'w';
+  printf("Testing substring matching!\n");
+  printf("Simple cases\n");
+  assert(String("1").beIndexOf(String("1234")) == 0);
+  assert(String("5").beIndexOf(String("1234")) == 4);
+  printf("Middle cases\n");
+  printf("Result is %u\n", String("ABCDABD").beIndexOf(String("BBCABCDABABCDABCDABDE")));
+  assert(String("ABCDABD").beIndexOf(String("BBCABCDABABCDABCDABDE")) == 13);
+  assert(String("ABCDABD").beIndexOf(String("BBCABCDABABCDABCDABEE")) ==  strlen("BBCABCDABABCDABCDABEE"));
 
+  srand(time(NULL));
+  for (int i = 0; i < 20; ++i) {
+    auto length = rand() % 40 + 20;
+    auto testStr = new char[length + 1];
+    testStr[length] = '\0';
+    for (int k = 0; k < length; ++k) {
+      testStr[k] = (rand() % 26) + 'A';
+    }
+    String testString(testStr);
+    assert(String("1").beIndexOf(testString) == testString.getLength());
+  }
   // Test the get C-style string function.
   auto raw = string.cStr();
   printf("%s\n", raw);
