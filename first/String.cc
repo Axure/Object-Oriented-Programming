@@ -66,7 +66,7 @@ String::String(String &&string) : length(string.length), storage(string.storage)
 String::~String() {
   logger->log("destroyed!");
   if (storage != nullptr) {
-    delete storage;
+    delete[] storage;
   }
 }
 
