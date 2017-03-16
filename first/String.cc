@@ -42,7 +42,7 @@ String::String() : length(0), storage(new char[1]()) {
  * The constructor from C-style strings.
  * @param str
  */
-String::String(char *str) : length(strlen(str)), storage(new char[length]) {
+String::String(char *str) : length(strlen(str)), storage(new char[length]()) {
   std::copy(str, str + length, storage);
 }
 
@@ -50,7 +50,7 @@ String::String(char *str) : length(strlen(str)), storage(new char[length]) {
  * The copy constructor
  * @param string
  */
-String::String(const String &string) : length(string.length), storage(new char[length]) {
+String::String(const String &string) : length(string.length), storage(new char[length]()) {
   std::copy(string.storage, string.storage + length, storage);
 }
 
@@ -104,7 +104,7 @@ const char &String::operator[](std::size_t n) const {
  */
 String &String::operator=(const String &string) {
   length = string.length;
-  storage = new char[length];
+  storage = new char[length]();
   std::copy(storage, storage + length, string.storage);
   return *this;
 }
@@ -307,4 +307,4 @@ void String::calculateLongestPrefixSuffix() const {
 
 }
 
-Logger *Logger::logger_ = nullptr;
+std::shared_ptr<Logger> Logger::logger_ = nullptr;

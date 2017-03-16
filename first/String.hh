@@ -48,7 +48,7 @@ class Logger {
 
 #endif
  private:
-  static Logger *logger_;
+  static std::shared_ptr<Logger> logger_;
  public:
 
   /**
@@ -56,8 +56,8 @@ class Logger {
    * Get the logger anywhere.
    * @return
    */
-  static Logger *getLogger() {
-    if (logger_ == nullptr) { logger_ = new Logger(); }
+  static std::shared_ptr<Logger> getLogger() {
+    if (logger_ == nullptr) { logger_ = std::make_shared<Logger>(); }
     return logger_;
   }
 };
@@ -92,7 +92,7 @@ class String {
    * The logger.
    * Currently not injected, but directly coupled.
    */
-  Logger *logger = Logger::getLogger();
+  std::shared_ptr<Logger> logger = Logger::getLogger();
 
   /**
    * The preprocessed data for the KMP algorithm.
@@ -122,7 +122,7 @@ class String {
    * @param str
    */
   template<std::size_t n>
-  String(const char (&str)[n])  : length(n - 1), storage(new char[n]) {
+  String(const char (&str)[n])  : length(n - 1), storage(new char[n]()) {
     std::copy(str, str + length, storage);
     logger->log("const template lvalue constructor");
   }
@@ -133,7 +133,7 @@ class String {
    * @param str
    */
   template<std::size_t n>
-  String(const char (&&str)[n])  : length(n - 1), storage(new char[n]) {
+  String(const char (&&str)[n])  : length(n - 1), storage(new char[n]()) {
     std::copy(str, str + length, storage);
     logger->log("const template rvalue constructor");
   }

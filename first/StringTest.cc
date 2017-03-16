@@ -1,5 +1,6 @@
 
 #include <cstdio>
+#include <cstring>
 #include <cstdlib>
 #include <ctime>
 #include <cassert>
@@ -52,17 +53,19 @@ int main() {
   printf("Result is %u\n", String("ABCDABD").beIndexOf(String("BBCABCDABABCDABCDABDE")));
   assert(String("ABCDABD").beIndexOf(String("BBCABCDABABCDABCDABDE")) == 13);
   assert(String("ABCDABD").beIndexOf(String("BBCABCDABABCDABCDABEE")) ==  strlen("BBCABCDABABCDABCDABEE"));
+  assert(String("012220123").beIndexOf(String("01222012220122201222012220123")) ==  20);
 
   srand(time(NULL));
   for (int i = 0; i < 20; ++i) {
     auto length = rand() % 40 + 20;
-    auto testStr = new char[length + 1];
+    auto testStr = new char[length + 1]();
     testStr[length] = '\0';
     for (int k = 0; k < length; ++k) {
       testStr[k] = (rand() % 26) + 'A';
     }
     String testString(testStr);
     assert(String("1").beIndexOf(testString) == testString.getLength());
+    delete[] testStr;
   }
   // Test the get C-style string function.
   auto raw = string.cStr();
