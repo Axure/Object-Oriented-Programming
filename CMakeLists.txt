@@ -5,7 +5,7 @@ IF (CMAKE_BUILD_TYPE MATCHES "Debug")
 
 ELSE ()
     message("not debug mode")
-ENDIF (CMAKE_BUILD_TYPE MATCHES "Debug")
+ENDIF (CMAKE_BUILD_TYPE MATCHES "Dtebug")
 
 add_library(String
         first/String.hh
@@ -27,3 +27,14 @@ IF (CMAKE_BUILD_TYPE MATCHES "Debug")
 ELSE ()
     message("not debug mode")
 ENDIF (CMAKE_BUILD_TYPE MATCHES "Debug")
+
+
+set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake-modules)
+
+if (CMAKE_BUILD_TYPE STREQUAL "Coverage")
+    include(CodeCoverage)
+    setup_target_for_coverage(Stringcoverage StringTest coverage)
+
+    SET(CMAKE_CXX_FLAGS "-g -O0 -fprofile-arcs -ftest-coverage")
+    SET(CMAKE_C_FLAGS "-g -O0 -fprofile-arcs -ftest-coverage")
+endif() #CMAKE_BUILD_TYPE STREQUAL "Coverage"
